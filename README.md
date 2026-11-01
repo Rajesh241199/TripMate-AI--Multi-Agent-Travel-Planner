@@ -17,8 +17,6 @@
 
 </div>
 
-> [!IMPORTANT]
-> **TripMate AI is a travel-planning prototype, not a booking platform.** Hotel rates, flight schedules, room inventory, transport connections, weather forecasts, and prices can be incomplete or outdated. The system distinguishes source research from bookable offers and asks for human review before finalizing a planning draft. **Approval does not purchase or reserve travel services.**
 
 ## Overview
 
