@@ -1,0 +1,317 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="TripMate AI — an interactive multi-agent travel itinerary planner.">
+  <title>TripMate AI | Multi-Agent Travel Planner</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --background: #0a1223;
+      --panel: #0f1a31;
+      --panel-soft: #172843;
+      --border: #344666;
+      --text: #edf4ff;
+      --muted: #a5b7d2;
+      --blue: #3b82f6;
+      --purple: #8143ef;
+      --green: #22c778;
+      --radius: 20px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse 650px 430px at 8% 16%, #1646808c, transparent 70%),
+        radial-gradient(ellipse 540px 480px at 95% 24%, #54288175, transparent 75%),
+        radial-gradient(ellipse 400px 290px at 47% 90%, #045f6360, transparent 80%),
+        var(--background);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    button, textarea { font: inherit; }
+    button { touch-action: manipulation; }
+    button:focus-visible, textarea:focus-visible, a:focus-visible {
+      outline: 2px solid #a6c4ff; outline-offset: 3px;
+    }
+    .site-header {
+      text-align: center;
+      padding: 44px 18px 18px;
+    }
+    .brand {
+      display: inline-block;
+      border: 1px solid #475577;
+      border-radius: 999px;
+      padding: 7px 15px;
+      background: #101c33c9;
+      color: #c7beff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .site-header h1 {
+      font-size: clamp(34px, 5.1vw, 70px);
+      letter-spacing: -.055em;
+      line-height: 1.08;
+      margin: 21px auto 13px;
+      max-width: 1000px;
+      background: linear-gradient(95deg, #eaf5ff 12%, #9bc7ff 54%, #b78bf4 96%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+    .site-header p {
+      max-width: 640px;
+      margin: 0 auto;
+      color: #cad5e6;
+      font-size: 15px;
+    }
+    .container { width: min(1120px, calc(100% - 32px)); margin: 0 auto 65px; }
+    .card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: linear-gradient(130deg, #101c32fa, #111a32f5 75%, #171634f5);
+      box-shadow: 0 12px 40px #04091819;
+      padding: 26px;
+      margin: 18px 0;
+    }
+    .section-heading { margin: 0; font-size: 22px; letter-spacing: -.02em; }
+    .subtle, .muted { color: var(--muted); font-size: 13px; }
+    .muted { line-height: 1.55; }
+    .planner-heading {
+      display: flex; justify-content: space-between; align-items: start;
+      gap: 16px; margin-bottom: 20px;
+    }
+    .planner-heading p { margin: 5px 0 0; }
+    .health {
+      white-space: nowrap; border: 1px solid #61718b; border-radius: 30px;
+      padding: 6px 12px; font-size: 12px; font-weight: 700; background: #253145;
+    }
+    .healthy { color: #8df0bd; background: #12372c; border-color: #24684d; }
+    .unhealthy { color: #ffb4ba; background: #3d222b; border-color: #934457; }
+    .prompt-label { display: block; margin-bottom: 9px; font-size: 13px; font-weight: 700; }
+    .prompt-row { display: grid; grid-template-columns: minmax(0, 1fr) 176px; gap: 14px; }
+    textarea {
+      width: 100%; min-height: 152px; padding: 18px; resize: vertical;
+      border: 1px solid #324362; border-radius: 18px;
+      background: #050d20; color: #f5f7ff;
+      font: 14px/1.8 ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+    textarea::placeholder { color: #8b9fbf; }
+    .primary-button {
+      min-height: 152px; border: 0; border-radius: 18px; padding: 16px;
+      background: linear-gradient(135deg, #2c6af0, #7b37ed);
+      box-shadow: 0 14px 30px #2348ba40;
+      color: white; font-weight: 800; cursor: pointer;
+    }
+    .primary-button:not(:disabled):hover { filter: brightness(1.09); }
+    button:disabled { cursor: not-allowed !important; opacity: .55; }
+    .spinner {
+      display: inline-block; height: 15px; width: 15px; border-radius: 50%;
+      border: 2px solid #ffffff65; border-top-color: #fff;
+      margin-right: 8px; vertical-align: -2px;
+      animation: turn .8s linear infinite;
+    }
+    @keyframes turn { to { transform: rotate(360deg); } }
+    .prompt-tools { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 15px; }
+    .chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip, .outline-button, .green-button {
+      background: #1d304f; border: 1px solid #415878; color: #f2f6ff;
+      border-radius: 999px; padding: 8px 13px; font-size: 12px; font-weight: 600; cursor: pointer;
+    }
+    .chip:hover, .outline-button:hover { background: #314d7a; }
+    .outline-button { border-radius: 11px; background: transparent; font-size: 13px; padding: 11px 15px; }
+    .green-button { border-radius: 11px; background: #0cac65; border-color: #0cac65; font-size: 13px; padding: 11px 15px; }
+    .green-button:hover:not(:disabled) { background: #0b9558; }
+    .tip { color: var(--muted); font-size: 12px; margin: 12px 0 0; }
+    .error-banner { color: #ffd8de; background: #3d1e2c; border: 1px solid #ad465b; border-radius: 12px; padding: 13px 15px; margin: 15px 0 0; }
+    .section-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .status-badge { border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 700; }
+    .positive { color: #9cf6c9; border: 1px solid #287753; background: #153b2d; }
+    .negative { color: #ffc6cf; border: 1px solid #a04454; background: #45222f; }
+    .caution { color: #ffe09a; border: 1px solid #916e2c; background: #3d3020; }
+    .progress { width: 100%; height: 7px; background: #273858; border-radius: 999px; overflow: hidden; margin-top: 16px; }
+    .progress span { display: block; height: 100%; width: 33%; background: linear-gradient(90deg, var(--blue), var(--purple)); animation: sweep 1.6s ease-in-out infinite alternate; }
+    @keyframes sweep { from {transform: translateX(-100%);} to {transform: translateX(305%);} }
+    .facts, .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 15px 0 0; }
+    .fact, .stat { border: 1px solid #3a5277; border-radius: 11px; background: #1b2e4e; padding: 12px; min-width: 0; overflow-wrap: anywhere; }
+    .fact-label, .stat-label { display: block; color: #a6b9da; font-size: 11px; margin-bottom: 5px; }
+    .fact strong, .stat strong { font-size: 15px; }
+    .result-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: start; gap: 14px; margin-bottom: 18px; }
+    .result-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+    .result-header p { margin: 4px 0 0; }
+    .itinerary {
+      background: #fff; color: #1d293c; border-radius: 20px;
+      padding: clamp(20px, 3.3vw, 40px);
+      overflow-wrap: anywhere; line-height: 1.75;
+    }
+    .itinerary h1, .itinerary h2 { color: #184cbe; line-height: 1.25; margin: 25px 0 12px; }
+    .itinerary h1:first-child, .itinerary h2:first-child { margin-top: 0; }
+    .itinerary h1 { font-size: 25px; }
+    .itinerary h2 { font-size: 20px; }
+    .itinerary h3 { font-size: 17px; }
+    .itinerary p, .itinerary li { font-size: 14px; }
+    .itinerary ul, .itinerary ol { padding-left: 22px; }
+    .itinerary table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    .itinerary td, .itinerary th { border: 1px solid #d8dfeb; padding: 8px; text-align: left; }
+    .itinerary th { background: #eef3ff; }
+    .itinerary code, .itinerary pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+    .itinerary a { color: #154bbb; }
+    .plain-text { white-space: pre-wrap; word-break: break-word; font: 13px/1.7 ui-monospace, Consolas, monospace; }
+    .panels { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 18px; }
+    .subpanel { border: 1px solid #354a6f; border-radius: 15px; padding: 16px; background: #101e38; overflow: hidden; }
+    .panel-heading { margin: 0 0 12px; font-size: 17px; }
+    .notice { padding: 12px 14px; border: 1px solid #52617a; border-radius: 10px; margin: 10px 0; font-size: 13px; }
+    .notice-info { background: #253551; color: #d1e4ff; }
+    .notice-warning { background: #382e20; border-color: #a07828; color: #ffe0a0; }
+    .notice-error { background: #41212e; border-color: #a63b51; color: #ffd1d9; }
+    .notice-success { background: #14392e; border-color: #2b7654; color: #b8f5cd; }
+    .issue-list { margin: 0; padding-left: 20px; }
+    .issue-list li { margin: 5px 0; }
+    .table-scroll { overflow-x: auto; }
+    .budget-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; }
+    .budget-table th, .budget-table td { text-align: left; padding: 9px; border-bottom: 1px solid #374c6a; vertical-align: top; }
+    .budget-table .numeric { text-align: right; white-space: nowrap; }
+    .disclosure { border: 1px solid #395075; border-radius: 11px; margin: 9px 0; overflow: hidden; }
+    .disclosure summary { cursor: pointer; padding: 12px; font-size: 13px; font-weight: 750; }
+    .disclosure[open] summary { background: #162b4d; }
+    .research-text { margin: 0; background: #081428; color: #d5e2f6; padding: 13px; max-height: 285px; overflow: auto; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .timeline { padding: 8px 14px 14px; }
+    .timeline-day { border-left: 3px solid #5984fa; margin: 10px 0; padding: 9px 13px; background: #1a2d4d; border-radius: 0 10px 10px 0; }
+    .timeline-day strong { display: block; font-size: 13px; }
+    .timeline-event { color: #c8d9f2; font-size: 12px; margin: 6px 0; }
+    .approval-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .approval-feedback { min-height: 95px; }
+    .site-footer { color: #899cb9; text-align: center; font-size: 12px; padding: 4px 20px 35px; }
+    @media (max-width: 680px) {
+      .site-header { padding-top: 26px; }
+      .prompt-row { grid-template-columns: 1fr; }
+      .primary-button { min-height: 60px; }
+      .card { padding: 17px; }
+      .planner-heading { flex-wrap: wrap; }
+      .result-actions { width: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .spinner, .progress span { animation: none; }
+    }
+    @media print {
+      @page { size: A4; margin: 14mm; }
+      body.printing-plan { color: #111; background: white !important; }
+      body.printing-plan .site-header,
+      body.printing-plan .planner-card,
+      body.printing-plan #planningStatus,
+      body.printing-plan #workflowSection,
+      body.printing-plan #approvalSection,
+      body.printing-plan #errorMessage,
+      body.printing-plan .site-footer,
+      body.printing-plan .result-actions,
+      body.printing-plan .panels,
+      body.printing-plan #threadInfo { display: none !important; }
+      body.printing-plan .container { width: 100%; margin: 0; }
+      body.printing-plan #resultSection { display: block !important; margin: 0; padding: 0; background: white; color: black; border: 0; box-shadow: none; }
+      body.printing-plan #resultTitle { color: black; }
+      body.printing-plan .itinerary { padding: 0; color: #111; background: white; }
+      body.printing-plan .itinerary h1, body.printing-plan .itinerary h2 { color: #1746a5; break-after: avoid-page; }
+      body.printing-plan .itinerary tr { break-inside: avoid; }
+      body.printing-plan .itinerary a { color: #1746a5; }
+    }
+  </style>
+  <!-- Optional Markdown rendering libraries. Without CDN access, script.js safely renders plain text. -->
+  <script defer src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
+  <!-- Load the custom application JavaScript once, after the optional libraries. -->
+  <script defer src="/static/script.js?v=6-final"></script>
+</head>
+<body>
+  <header class="site-header">
+    <span class="brand">✈️ TripMate AI · Multi-Agent Travel Planner</span>
+    <h1>Plan Your Perfect Trip with AI</h1>
+    <p>Explore routes, accommodations, estimated budgets and a day-by-day travel plan using a supervised LangGraph workflow.</p>
+  </header>
+
+  <main class="container">
+    <section id="plannerCard" class="card planner-card" aria-labelledby="plannerTitle">
+      <div class="planner-heading">
+        <div>
+          <h2 id="plannerTitle" class="section-heading">Where do you want to go?</h2>
+          <p class="subtle">Tell us your origin, destination, duration, travelers, dates, and total budget.</p>
+        </div>
+        <span id="apiStatus" class="health" aria-live="polite">● Checking API…</span>
+      </div>
+      <form id="tripForm">
+        <label class="prompt-label" for="userInput">Your travel request</label>
+        <div class="prompt-row">
+          <textarea id="userInput" name="message" required maxlength="3500" placeholder="Plan a 12-day New Zealand trip from Hyderabad in February 2027 for two adults, covering Auckland, Rotorua, Queenstown and Milford Sound, including flights and hotels under INR 5 lakhs."></textarea>
+          <button id="generateBtn" class="primary-button" type="submit">
+            <span id="generateSpinner" class="spinner" hidden></span>
+            <span id="generateBtnText">Generate Plan</span>
+          </button>
+        </div>
+        <div class="prompt-tools">
+          <div id="exampleChips" class="chip-group" aria-label="Example travel prompts"></div>
+          <button id="clearBtn" class="outline-button" type="button">New plan / clear</button>
+        </div>
+        <p class="tip">Tip: Ctrl + Enter to generate. Example prompts are suggestions, not destination restrictions.</p>
+      </form>
+      <div id="errorMessage" class="error-banner" role="alert" hidden></div>
+    </section>
+
+    <section id="planningStatus" class="card" aria-live="polite" hidden>
+      <div class="section-top">
+        <h2 class="section-heading">Planning status</h2>
+        <span id="statusLabel" class="status-badge caution">Not started</span>
+      </div>
+      <p id="statusDescription" class="subtle"></p>
+      <p id="elapsed" class="subtle"></p>
+      <div id="statusProgress" class="progress" hidden><span></span></div>
+    </section>
+
+    <section id="workflowSection" class="card" aria-labelledby="workflowTitle" hidden>
+      <div class="section-top">
+        <h2 id="workflowTitle" class="section-heading">Supervisor execution plan</h2>
+        <span id="guardrailBadge" class="status-badge caution">Not evaluated</span>
+      </div>
+      <p id="supervisorReasoning" class="subtle"></p>
+      <div id="agentChips" class="chip-group"></div>
+      <div id="tripFacts" class="facts"></div>
+    </section>
+
+    <section id="resultSection" class="card" aria-labelledby="resultTitle" hidden>
+      <div class="result-header">
+        <div>
+          <h2 id="resultTitle" class="section-heading">Your AI Travel Plan</h2>
+          <p id="threadInfo" class="subtle"></p>
+        </div>
+        <div class="result-actions">
+          <button id="copyBtn" type="button" class="outline-button" disabled>Copy</button>
+          <button id="printBtn" type="button" class="green-button" disabled>Print / Save PDF</button>
+        </div>
+      </div>
+      <article id="resultBox" class="itinerary" aria-label="Generated travel itinerary"></article>
+      <div class="panels">
+        <section id="budgetPanel" class="subpanel" aria-label="Estimated budget"></section>
+        <section id="validationPanel" class="subpanel" aria-label="Quality and validation"></section>
+        <section id="routePanel" class="subpanel" aria-label="Chronological travel route"></section>
+        <section id="researchPanel" class="subpanel" aria-label="Specialist agent research"></section>
+      </div>
+    </section>
+
+    <section id="approvalSection" class="card" aria-labelledby="approvalTitle" hidden>
+      <h2 id="approvalTitle" class="section-heading">Human-in-the-loop review</h2>
+      <p id="approvalMessage" class="subtle"></p>
+      <label for="approvalFeedback" class="prompt-label">Revision feedback (only required when requesting changes)</label>
+      <textarea id="approvalFeedback" class="approval-feedback" maxlength="1000" placeholder="Example: Keep the full 12 days in New Zealand and return the rental car before the domestic flight."></textarea>
+      <div class="approval-actions">
+        <button id="approveBtn" class="green-button" type="button" disabled>Approve draft</button>
+        <button id="reviseBtn" class="outline-button" type="button" disabled>Request changes</button>
+      </div>
+      <p class="tip">Approving confirms the planning draft only. It does not book flights, hotels, or activities.</p>
+    </section>
+  </main>
+  <footer class="site-footer">Built with FastAPI · LangGraph · Groq · MCP · PostgreSQL. Travel information and estimated costs require independent verification.</footer>
+</body>
+</html>
